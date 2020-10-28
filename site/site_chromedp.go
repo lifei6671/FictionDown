@@ -2,79 +2,69 @@ package site
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"net/url"
-	"os"
 	"strings"
+	"time"
 
 	"github.com/chromedp/chromedp"
 	"github.com/ma6254/FictionDown/store"
+	"github.com/ma6254/FictionDown/utils"
 )
 
 func ChromedpBookInfo(BookURL string, logfile string) (s *store.Store, err error) {
 
-	u, err := url.Parse(BookURL)
+	ms, err := MatchOne(Sitepool, BookURL)
 	if err != nil {
 		return nil, err
-	}
-	Site, ok := regMap[u.Host]
-	if !ok {
-		return nil, ErrUnsupportSite{u.Host}
 	}
 
 	var (
 		// BookName string
 		// Author   string
-		html   string
-		logOpt []chromedp.Option
+		html string
+		u    *url.URL
 	)
+
+	u, _ = url.Parse(BookURL)
 
 	tasks := chromedp.Tasks{
 		chromedp.Navigate(BookURL),
+		chromedp.Sleep(2 * time.Second),
 		// chromedp.Text(`html`, &html, chromedp.ByQuery),
 		chromedp.OuterHTML(`html`, &html, chromedp.ByQuery),
 		// chromedp.WaitVisible(`html`, chromedp.ByQuery),
-		// chromedp.ActionFunc(func(ctxt context.Context, c cdp.Executor) error {
-		// 	html, err := dom.GetOuterHTML().WithNodeID(cdp.NodeID(0)).Do(ctxt, c)
-		// 	return nil
-		// }),
 	}
 
-	// create context
-	ctxt, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	if err = utils.Retry(5, time.Millisecond*500, func() error {
+		// create chrome instance
+		ctx, cancel := chromedp.NewContext(context.Background())
+		defer cancel()
+		return chromedp.Run(ctx, tasks...)
+	}); err != nil {
+		return nil, err
+	}
 
-	if logfile == "" {
-		logOpt = []chromedp.Option{}
-	} else {
-		clog := log.New(os.Stdout, "", log.LstdFlags)
-		logOpt = []chromedp.Option{
-			chromedp.WithLog(clog.Printf),
+	chapter, err := ms.BookInfo(strings.NewReader(html))
+	if err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(chapter.BookName) == "" {
+		err = fmt.Errorf("BookInfo Name is empty")
+		return
+	}
+
+	for v1, k1 := range chapter.Volumes {
+		for v2, k2 := range k1.Chapters {
+			u1, _ := url.Parse(k2.URL)
+			chapter.Volumes[v1].Chapters[v2].URL = u.ResolveReference(u1).String()
 		}
 	}
 
-	// create chrome instance
-	c, err := chromedp.New(ctxt, logOpt...)
-	if err != nil {
-		log.Fatal(err)
+	if len(chapter.Volumes) == 0 {
+		// fmt.Printf(content)
+		return nil, fmt.Errorf("not match volumes")
 	}
 
-	err = c.Run(ctxt, tasks)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// shutdown chrome
-	err = c.Shutdown(ctxt)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// wait for chrome to finish
-	err = c.Wait()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return Site.BookInfo(strings.NewReader(html))
+	return chapter, nil
 }

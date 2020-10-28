@@ -1,34 +1,69 @@
 # FictionDown
 
-用于下载盗版网络小说
+FictionDown 是一个命令行界面的小说爬取工具
+
+**用于批量下载盗版网络小说，该软件仅用于数据分析的样本采集，请勿用于其他用途**
+
+**该软件所产生的文档请勿传播，请勿用于数据评估外的其他用途**
 
 [![License](https://img.shields.io/github/license/ma6254/FictionDown.svg)](https://raw.githubusercontent.com/ma6254/FictionDown/master/LICENSE)
 [![release_version](https://img.shields.io/github/release/ma6254/FictionDown.svg)](https://github.com/ma6254/FictionDown/releases)
 [![last-commit](https://img.shields.io/github/last-commit/ma6254/FictionDown.svg)](https://github.com/ma6254/FictionDown/commits)
 [![Download Count](https://img.shields.io/github/downloads/ma6254/FictionDown/total.svg)](https://github.com/ma6254/FictionDown/releases)
+[![goproxy.cn](https://goproxy.cn/stats/github.com/ma6254/FictionDown/badges/download-count.svg)](https://goproxy.cn)
 
-[![godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/ma6254/FictionDown/)
+[![godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/ma6254/FictionDown/)
 [![QQ 群](https://img.shields.io/badge/qq%E7%BE%A4-934873832-orange.svg)](https://jq.qq.com/?_wv=1027&k=5bN0SVA)
 
+[![Go](https://github.com/ma6254/FictionDown/workflows/Go/badge.svg)](https://github.com/ma6254/FictionDown/actions/runs/39839114)
 [![travis-ci](https://www.travis-ci.org/ma6254/FictionDown.svg?branch=master)](https://travis-ci.org/ma6254/FictionDown)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ma6254/FictionDown)](https://goreportcard.com/report/github.com/ma6254/FictionDown)
+
+## 文档
+
+文档目前「指南」部分已完成，你可以在[这里](https://ma6254.github.io/FictionDown/)查看。
 
 ## 特性
 
 - 以起点为样本，多站点多线程爬取校对
-- 支持导出txt，以兼容大多数阅读器
-- 支持导出markdown，可以用pandoc转换成epub，保留书本信息、卷结构、作者信息
+- 支持导出 txt，以兼容大多数阅读器
+- 支持导出 epub(还有些问题，某些阅读器无法打开)
+- 支持导出 markdown，可以用 pandoc 转换成 epub，附带 epub 的`metadata`，保留书本信息、卷结构、作者信息
 - 内置简单的广告过滤（现在还不完善）
-- 用Golang编写，安装部署方便，外部依赖只有PhantomJS
+- 用 Golang 编写，安装部署方便，可选的外部依赖：Chromedp
+- 支持断点续爬，强制结束再爬会在上次结束的地方继续
 
-## 使用流程
+## 站点支持
+
+- 是否正版：✅ 为正版站点 ❌ 为盗版站点
+- 是否分卷：✅ 章节分卷 ❌ 所有章节放在一个卷中不分卷
+- 站内搜索：✅ 完全支持 ❌ 不支持 ❔ 站点支持但软件未适配 ⚠️ 站点支持，但不可用或维护中 ⛔ 站点支持搜索，但没有好的适配方案（比如用 Google 做站内搜索）
+
+| 站点名称     | 网址              | 是否正版 | 是否分卷 | 支持站内搜索 | 代码文件                       |
+| ------------ | ----------------- | -------- | -------- | ------------ | ------------------------------ |
+| 起点中文网   | www.qidian.com    | ✅       | ✅       | ✅           | sites\qidian\main.go           |
+| 笔趣阁       | www.biquge5200.cc | ❌       | ❌       | ✅           | sites\biquge5200_cc\main.go    |
+| 顶点小说     | www.booktxt.net   | ❌       | ❌       | ✅           | sites\booktxt_net\main.go      |
+| 新八一中文网 | www.81new.com     | ❌       | ❌       | ✅           | sites\new81\main.go            |
+| 书迷楼       | www.shumil.co     | ❌       | ❌       | ✅           | sites\shumil_co\main.go        |
+| 完本神站     | www.wanbentxt.com | ❌       | ❌       | ✅           | site\wanbentxt_com.go          |
+| 38 看书      | www.38kanshu.com  | ❌       | ❌       | ⚠️           | sites\com_38kanshu\38kanshu.go |
+
+## 使用注意
+
+- 起点和盗版站的页面可能随时更改，可能会使抓取匹配失效，如果失效请提 issue
+- 生成的 EPUB 文件可能过大，市面上大多数阅读器会异常卡顿或者直接崩溃
+- 某些过于老的书或者作者频繁修改的书，盗版站都没有收录，也就无法爬取，如能找此书可用的盗版站请提 issue，并写出书名和正版站链接、盗版站链接
+
+## 工作流程
 
 1. 输入起点链接
-2. 获取到书本信息，开始爬取每章内容，遇到vip章节放入`Example`中作为校对样本
+2. 获取到书本信息，开始爬取每章内容，遇到 vip 章节放入`Example`中作为校对样本
 3. 手动设置笔趣阁等盗版小说的对应链接，`tamp`字段
-4. 再次启动，开始爬取，只爬取VIP部分，并跟`Example`进行校对
-5. 手动编辑对应的缓存文件，手动删除广告和某些随机字符(有部分是关键字,可能会导致pandoc内存溢出或者样式错误)
-6. `d -f md`生成markwown
-7. 用pandoc转换成epub，`pandoc -o xxxx.epub xxxx.md`
+4. 再次启动，开始爬取，只爬取 VIP 部分，并跟`Example`进行校对
+5. 手动编辑对应的缓存文件，手动删除广告和某些随机字符(有部分是关键字,可能会导致 pandoc 内存溢出或者样式错误)
+6. `conv -f md`生成 markwown
+7. 用 pandoc 转换成 epub，`pandoc -o xxxx.epub xxxx.md`
 
 ### Example
 
@@ -36,262 +71,114 @@
 > ./FictionDown --url https://book.qidian.com/info/3249362 d # 获取正版信息
 
 # 有时会发生`not match volumes`的错误，请启用Chromedp或者PhantomJS
-
 # Use Chromedp
-> ./FictionDown --url https://book.qidian.com/info/3249362 d --driver chromedp
-
+> ./FictionDown --url https://book.qidian.com/info/3249362 -d chromedp d
 # Use PhantomJS
-> ./FictionDown --url https://book.qidian.com/info/3249362 d --driver phantomjs
+> ./FictionDown --url https://book.qidian.com/info/3249362 -d phantomjs d
 
 > vim 一世之尊.FictionDown # 加入盗版小说链接
-> ./FictionDown -i 一世之尊.FictionDown d -f md # 获取盗版内容
+> ./FictionDown -i 一世之尊.FictionDown d # 获取盗版内容
+# 爬取完毕就可以输出可阅读的文档了
+> ./FictionDown -i 一世之尊.FictionDown conv -f txt
+# 转换成epub有两种方式
+# 1.输出markdown，再用pandoc转换成epub
+> ./FictionDown -i 一世之尊.FictionDown conv -f md
 > pandoc -o 一世之尊.epub 一世之尊.md
+# 某些阅读器需要对章节进行定位,需要加上--epub-chapter-level=2
+> pandoc -o 一世之尊.epub --epub-chapter-level=2 一世之尊.md
+# 2.直接输出epub（调用Pandoc）
+> ./FictionDown -i 一世之尊.FictionDown conv -f epub
+```
+
+#### 可直接根据搜索结果直接下载（当存在至少一个正版源时可用）
+
+```bash
+> ./FictionDown s -d -k "诡秘之主"
+```
+
+#### 站内搜索，然后填入
+
+```bash
+> ./FictionDown --url https://book.qidian.com/info/3249362 d # 获取正版信息
+
+# 有时会发生`not match volumes`的错误，请启用Chromedp或者PhantomJS
+# Use Chromedp
+> ./FictionDown --url https://book.qidian.com/info/3249362 --driver chromedp d
+# Use PhantomJS
+> ./FictionDown --url https://book.qidian.com/info/3249362 --driver phantomjs d
+
+> ./FictionDown -i 一世之尊.FictionDown s -k 一世之尊 -p # 搜索然后放入
+> ./FictionDown -i 一世之尊.FictionDown d # 获取盗版内容
+# 爬取完毕就可以输出可阅读的文档了
+> ./FictionDown -i 一世之尊.FictionDown conv -f txt
+# 转换成epub有两种方式
+# 1.输出markdown，再用pandoc转换成epub
+> ./FictionDown -i 一世之尊.FictionDown conv -f md
+> pandoc -o 一世之尊.epub 一世之尊.md
+# 2.直接输出epub（某些阅读器会报错）
+> ./FictionDown -i 一世之尊.FictionDown conv -f epub
 ```
 
 ## 未实现
 
-- 爬取起点的时候带上`Cookie`，用于爬取已购买章节
+- 爬取正版的时候带上`Cookie`，用于爬取已购买章节
+- 支持 晋江文学城
+- 支持 纵横中文网
+- 支持有毒小说网
 - 支持刺猬猫（即“欢乐书客”）
-- 支持直接输出epub，不需要pandoc
-- 支持小说站内搜索
-- 多线程转换md
-- 整理main包中的面条逻辑
+- 整理 main 包中的面条逻辑
 - 整理命令行参数风格
-- 在windows下，md转换到epub时有路径问题
 - 完善广告过滤
 - 简化使用步骤
-- 优化log输出
-- 书本简介也应该为HTML。即`<p>&emsp;&emsp;</p>`而不是现在的用`\t`和`\n`
+- 优化 log 输出
+- 对于特殊章节，支持手动指定盗版链接或者跳过忽略
+- 外部加载匹配规则，让用户可以自己添加正/盗版源
+- 支持章节更新
+- 章节匹配过程优化
 
-## 编译
+## Usage
 
-包管理采用godep
+```bash
+NAME:
+   FictionDown - https://github.com/ma6254/FictionDown
 
-1. `dep ensure -v`
-2. `gox github.com/ma6254/FictionDown/cmd/FictionDown`
+USAGE:
+    [global options] command [command options] [arguments...]
 
-## 支持的盗版站点
+AUTHOR:
+   ma6254 <9a6c5609806a@gmail.com>
 
-随机挑选了几个，实际上有些过于旧的书和作者频繁修改的书是爬不全的
+COMMANDS:
+     download, d, down  下载缓存文件
+     check, c, chk      检查缓存文件
+     edit, e            对缓存文件进行手动修改
+     convert, conv      转换格式输出
+     pirate, p          检索盗版站点
+     search, s          检索盗版站点
+     help, h            Shows a list of commands or help for one command
 
-- www.biqiuge.com
-- www.biquge5200.cc
-- www.bqg5200.com
-- www.booktxt.net
-- www.81new.com
-
-## 盗版内容广告
-
-记录一下可能的广告内容，可以在`使用流程`中手动删除广告内容
-
-- 段落最后`\r`
-- 段落最后`rs`
-- `天才一秒记住`
-
-### 章节信息
-
-章节内可能会有书名、章节名等，一般在该章第一段最前，或者最末一端
-
-```yaml
-- 第587章飞机事变
+GLOBAL OPTIONS:
+   -u value, --url value     图书链接
+   --tu value, --turl value  资源网站链接
+   -i value, --input value   输入缓存文件
+   --log value               log file path
+   --driver value, -d value  请求方式,support: none,phantomjs,chromedp
+   --help, -h                show help
+   --version, -v             print the version
 ```
 
-### 分割线
+## 安装和编译
 
-```yaml
-- '-----这是华丽的分割线--'
-- 小说网友请提示:长时间阅读请注意眼睛的休息。推荐阅读：
-- '----这是华丽的分割线---'
-- …………
+程序为单执行文件，命令行 CLI 界面
+
+包管理为 gomod
+
+```bash
+go get github.com/ma6254/FictionDown
 ```
 
-### 网站广告
+交叉编译这几个平台的可执行文件：`linux/arm` `linux/amd64` `darwin/amd64` `windows/amd64`
 
-直接在章节内放入网站名字或者网址
-
-```yaml
-- “战争，毫无人性可言！！”2k阅读网 # 章节最后一端的最后
-- 江杨的耐心很好，他一点不觉得多等一个多小时怎么样，反而和这个老板聊了起来。顶点小说
-- 周佳是知道乌海能吃的，毕竟乌兽这名号也不是白得的，但这全部鱿鱼的菜粗略一算都有二三十道，这下就是周佳都怀疑乌海能不能吃完。の菠ζ萝ζ小の说
-- “你确定我先做？”乌海一脸怀疑的看着袁州。小说 # 可能是被二道贩子删去了
+```bash
+make multiple_build
 ```
-
-### APP下载
-
-```yaml
-- Ps:书友们，我是火之高兴，推荐一款免费小说App，支持小说下载、听书、零广告、多种阅读模式。请您关注微信公众号：书友们快关注起来吧！
-- Ps:书友们，我是会做菜的猫，推荐一款免费小说App，支持小说下载、听书、零广告、多种阅读模式。请您关注微信公众号：书友们快关注起来吧！
-- 公告：笔趣阁APP安卓，苹果专用版，告别一切广告，请关注微信公众号进入下载安装：appxsyd
-```
-
-### 各种在线看
-
-特指黄色广告，有时是微信号有时是网站，有时是单独一行，有时是跟在最后一行末尾
-
-```yaml
-- 泰国最胸女主播全新激_情视频曝光扑倒男主好饥_渴!!在线看:!!
-- G_罩杯女星偶像首拍A_V勇夺冠军在线观看!!:meinvlu123!!
-- 翘_臀女神张雪馨火辣丁_字_裤视频曝光！！请关注微信公众号在线看：baixingsiyu66！！
-- 童颜巨_Ru香汗淋漓大_尺_度双球都快溢_出来的大_胆视频在线看!!请关注微信公众号：meinvmei222！！
-- 泰国最胸女主播全新激_情视频曝光扑倒男主好饥_渴!!在线看:!!
-- G_罩杯女星偶像首拍A_V勇夺冠军在线观看！！：
-- 厉害的屁股丰满迷人的身材！微信公众：meinvmeng22你懂我也懂！
-- '...、、重庆大学巨.乳校花自拍，真正的童颜巨.乳照片请关注微信公众号在线看美女'
-```
-
-### 微信公众号or微信号
-
-有时作者也会推荐一些微信公众号，但是这里指的不是这个，是盗版网站自己加的营销推广广告
-
-```yaml
-- 推荐一个分享天猫淘宝购物优惠券公众号:guoertejia先领券再购物最高可以节省90%。打开微信添加微信公众号:guoertejia
-- 推荐一个淘宝天猫内部折扣优惠券的微信公众号:guoertejia每天人工筛选上百款特价商品。打开微信添加微信公众号:guoertejia省不少辛苦钱。
-- 双十一狂欢节来啦！推荐微信公众号:guoertejia免费领超级红包和限量优惠券。打开微信添加微信公众号:guoertejia买东西更划算。
-- 推荐一个网购优惠公众号:guoertejia每天精选百款超值商品。打开微信添加微信公众号:guoertejia免费领取福利优惠券
-```
-
-### xxx说
-
-xxx是当前小说中的某个角色，一般为主角，有时后跟单独一行一个10以内的数字
-
-正则: `    - \S*：$`
-
-```yaml
-- 朱秀荣：
-- 弘治皇帝：
-- 方继藩：
-- 朱厚照：
-- 王震：
-- 杨雅：
-- 江臣：
-- 苏长老：
-- 老者：
-- 陈乐瑶：
-```
-
-### 其他作者的广告
-
-这个`老施`不知道是谁，好几本书里都有他的广告，貌似是盗版网站加的，原文没有
-
-```yaml
-- '推荐都市大神老施新书:'
-```
-
-### 网址
-
-```yaml
-- 记住手机版网址：m.
-- 先给自己定个小目标：比如收藏：.手机版网址：m.
-- 破防盗完美章节，请用搜索引擎各种小说任你观看
-- 搜索引擎各种小说任你观看，
-- https:///book_73598/l
-- /book_66099/l
-- 天才一秒记住本站地址：。笔趣阁手机版阅读网址：
-- 'https:'
-- 天才一秒记住本站地址：。顶点：88106
-- 热门推荐：
-- 如您已阅读到此章节，请移步到wωw.999wχ.cοm阅读最新章节,手机同步阅读请访问sj.999wχ.coμ,清爽无广告。敬请记住我们新的网址999wχ.coμ
-- 最快更新，无弹窗阅读请。
-- 纯文字在线本站域名手机同步请访问
-- 提供全文字在线，更新速度更快文章质量更好，如果您觉得网不错就多多分享本站谢谢各位读者的支持
-- 高速首发一世之尊，本章节是地址为如果你觉的本章节还不错的话请不要忘记向您qq群和微博里的朋友推荐哦
-- http:///txt/73/73869/
-- 。_手机版阅读网址：
-- 请记住本书首发域名：.com。妙书屋手机版阅读网址：.com
-- 。妙书屋
-- http:///txt/73869/
-- 一秒★小△说§网..Org】，精彩小说无弹窗免费阅读！
-- m.。
-- m.手机最省流量,无广告的站点。
-- 搜索：9--9--9--w--x阅读最新章节-绿色无广告-快速稳定-免费阅读
-- 手机用户请浏览m阅读，。
-- 更新快无广告。
-- 唉，这真是搞什么搞啊！李琳是完全搞不明白现在的状况，这本来直来直去的事情，非要中途拐弯。*菠⿻萝⿻小*说
-- ±菠∨萝∨小±说
-- “而且像地狱火这样的战争傀儡，我目前可就这一个。无广告的站点。”埃文森一脸肉疼的表情说道“而且他是一次性用品，不能回收。”
-- “一秒★小△说§网..Org】，精彩小说无弹窗免费阅读！”
-- “将毁灭万物当作企业文化的燃烧军团，从来不相信有什么东西是杀不死的，有什么东西是不可以毁灭的。本文由ｗｗｗ。lwχｓ520。ｃｏｍ首发如果有的话，那只是因为你的力量不够大，或者是没有找对方法。”
-- 顶点阅读网址：m.
-- 搜索：九九九文学阅读最新章节-绿色无广告-快速稳定-免费阅读
-- https:///book_46062/l
-- 书客居阅读网址：
-- 如果说年初三就上班的人，上辈子都是折翼天使。△◇△番茄小说网w-w-w-．x`
-- 来人的脚步声很大“踏踏踏”的，走路也比较快，风风火火的，就那么进来了。乐文小说网值得您收藏ＷwＷ。LＷXＳ５２０。ＣＯＭ
-- 搜索：九九九文学阅读最新章节-绿色无广告-快速稳定-免费阅读
-- 在出探寻遗迹前的日子，提莉最大的兴趣就是沿着边陲镇平坦的街道慢慢闲逛，观察这座在罗兰领主手中生惊人变化的偏远领地。中文网
-- 请记住本书首发域名：.。都来读手机版阅读网址：m.
-- “是，首席导师大人。”未完待续。如果您喜欢这部作品，欢迎您来起点投、，您的支持，就是我最大的动力。手机用户请到阅读。...
-```
-
-### 空行
-
-不明意义的空行，有时会有省略号
-
-```yaml
-- 。
-- “”
-- "18119"
-- '!!:!!'
-- a
-- :,,gegegengxin!!
-- :,,!!
-- ':'
-- '&#&#&#&#&#&#&#&#&#&#&#&#&#&#&#&#&#&#&#&#&#&#&#&#&#&#&#'
-- 8)
-- ♂！
-- 767e;5ea6;641c;7d22;3010;4e91;6765;9601;3011;5c0f;8Bf4;7f51;7ad9;ff0c;8Ba9;4f60;4f53;9a8c;66f4;65B0;6700;65B0;6700;5feB;7684;7ae0;8282;5c0f;8Bf4;ff0c;6240;6709;5c0f;8Bf4;79d2;66f4;65B0;3002;
-- "0"
-- "0773"
-- 。:。
-- '*******************'
-- ……dudu3;
-- '*'
-- '*****'
-- />
-- 16-10-0610:36:09
-- '-'
-```
-
-### 特殊的结尾
-
-- 以.结尾
-
-### 屏蔽词问题
-
-有时小说内会出现用*号代替的屏蔽词，当小说中连续出现`*xxx*`之类的就会被识别为markdown中的强调样式
-用`□`或者`■`代替
-
-### 随机字符
-
-一般是章节正文第一行的开头或者末尾，有时会有像`[]`、`()`等等的关键字，不删除可能会引起pandoc内存溢出
-
-```yaml
-- 时间已经很晚了，石磊虽然激动难耐，但他还是将那些字画全都收拢起来，不打算继续观看ＷwＷ..lā
-- “什么时候轮到丫环指挥主人做事了”孟奇拿捏着腔调，不放过任何一个机会打击顾小桑。。。看最新最全小说
-- 砰一声，门板被撞飞，四个人如旋风般冲了进来，站定于剑将军身前。.xs.org看最新最全小说
-- 接下来要出场的是，来自阿斯嘉德的自由体操选手希芙，请大家欣赏她精彩的~щww~~lā
-- 墨菲斯托饶有兴趣地看着，正仔细的审视着契约的埃森“小子，你很专щww”
-- “你看人家托尼的那套3d投影系统多上档次，那左手右手一个慢动作，不光把该办的事情办完了，还能装逼耍帅。㈠你这神盾局局长就不能跟人家好好学学？”
-- janetbsp;
-- reads;
-- nbp;
-- 商船队顺着赤水河支流北上，经过银光城后，驶入了通向王都的大运河。[〈〔＜<网
-- 接下来的两天，塔萨不停往返于玛格丽商会和王都郊外。<[
-- 在恢弘的教堂大殿中，费礼祭司正俯视着一位跪在他脚边的农夫。[〈〈
-- 一周后，第一军远征队和女巫们终于抵达边陲镇，从出之日算起，这趟任务差不多花去了大半个月时间，比预期的时间延后了五天。[[〈〔[网
-- ..，请关注
-- ……dudu3;
-- 永冬王都圣殿的花岗石台阶已被鲜血染红，空气中的甜腥味浓郁得有些刺鼻。〔{{网
-- 得知殿下那边有了治愈邪疫的方法，塔萨焦躁不安的心情终于平复下来。（〈
-- 凯莫.斯垂尔结束完今天的试验后回到家中，妻子已经做好了烤面饼和蘑菇汤，还为他斟满了一杯白酒。〈
-- 戏剧演出获得了极大的成功。（〔
-- 暴雨来得快，去得也很快。〔网
-- 王都骑士团像是一把银色的利刃，切入了嘉西亚队伍的后方。小说网≥﹤≦＜≦＜≦﹤≤≦≦＜≤
-- 见到对方的第一眼，梅伊立刻就把马上返回的打算抛到脑后了。中文﹤＜﹤﹤≦≦≦＜
-- 没有幕布，没有致辞，只有一块木板将前台和准备间分隔开，一群人次在如此简陋的舞台上演出戏剧，这也是他们人生中第一次正式表演。≯小说网≦≤＜≦≤≤≤≤≤
-- 罗兰虽然让第一军每周都拉练两次，但从未试过夜间行军。≧网
-- 随着赤水河南岸的林地逐渐被清理出来，开耕的日子也越来越近。≥≯网
-- '面对炼金协会成员齐刷刷的目光，凯莫.斯垂尔微笑道，“你是说点石成金吗？当然可以，接下来就让我来演示一番吧。”1-01-112:1:'
-```
-
-![boom_img](https://raw.githubusercontent.com/ma6254/FictionDown/master/doc_img/boom.png)
